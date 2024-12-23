@@ -1,11 +1,13 @@
 import streamlit as st
 
-col1, col2 = st.columns(2)
+st.set_page_config(
+    page_title="Dashboard",
+    page_icon="🚀",
+    layout="wide",
+)
 
-with col1:
-   st.header("A cat")
-   st.image("https://static.streamlit.io/examples/cat.jpg")
+st.title("Welcome to the Dashboard! 🚀")
+st.write("Use the sidebar to navigate through different sections of the app.")
 
-with col2:
-   st.header("A dog")
-   st.image("https://static.streamlit.io/examples/dog.jpg")
+# Optionally, add a welcome image or custom content
+st.image("welcome_image.png", use_container_width=True)
