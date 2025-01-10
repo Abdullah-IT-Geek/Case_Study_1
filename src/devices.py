@@ -18,7 +18,7 @@ class Device():
         
     # String representation of the class
     def __str__(self):
-        return f'Device (Object) {self.device_name} ({self.managed_by_user_id})'
+        return f'{self.device_name} which is managed by {self.managed_by_user_id}'
 
     # String representation of the class
     def __repr__(self):
@@ -46,6 +46,7 @@ class Device():
         if result:
             # Delete the record from the database
             self.db_connector.remove(doc_ids=[result[0].doc_id])
+            print(self.db_connector)
             print("Data deleted.")
         else:
             print("Data not found.")
@@ -53,6 +54,7 @@ class Device():
     def set_managed_by_user_id(self, managed_by_user_id: str):
         """Expects `managed_by_user_id` to be a valid user id that exists in the database."""
         self.managed_by_user_id = managed_by_user_id
+        
 
     # Class method that can be called without an instance of the class to construct an instance of the class
     @classmethod
