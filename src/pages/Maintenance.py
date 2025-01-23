@@ -1,37 +1,58 @@
 import streamlit as st
-def update_price_from_euro():
-    st.session_state.price_dollar = st.session_state.price_euro * 1.1
-def update_price_from_dollar():
-    st.session_state.price_euro = st.session_state.price_dollar * 0.9
+from datetime import date
+from maintanence_service import MaintanenceService
+from devices import Device
+
+rates = {
+        "EUR": 1.0,      # Basis
+        "USD": 1.1,      # Beispielkurs: 1 EUR = 1.1 USD
+        "GBP": 0.85      # Beispielkurs: 1 EUR = 0.85 GBP
+    }
+
+def convert_price(amount, currency, direction="to_currency"):
+    """
+    Convert a price between currencies.
+
+    Args:
+        amount (float): The amount to convert.
+        currency (str): The target currency.
+        direction (str): Conversion direction, either "to_currency" (default) or "from_currency".
+
+    Returns:
+        float: Converted amount.
+    """
+    if direction == "to_currency":
+        return amount * rates[currency]
+    elif direction == "from_currency":
+        return amount / rates[currency]
+    else:
+        raise ValueError("Invalid direction. Use 'to_currency' or 'from_currency'.")
 
 
 st.title("🔧 Maintenance")
-st.write("Shedule maintenance tasks here.")
+st.write("Schedule maintenance tasks here.")
 
-tab1, tab2 = st.tabs(["Upcoming Maintance", "Miantain cost"])
+tab1, tab2 = st.tabs(["Upcoming Maintance", "Maintance cost"])
 
 with tab1:
-    # Add widgets for device management (example)
-    device_id = st.text_input("Enter device ID")
-    selected_date = st.date_input("Select a date", value=None)
-   
-    if st.button("Register Maintance"):
-        st.success(f"Device {device_id} sheduled for maintenance on {selected_date}!")
-
-    container = st.container(border=True)
-    container.write("Device ID: Gerät1")
-    container.write(f"Gerät1 will be maintained in 10.09.2025")
+    selected_currency = st.selectbox("Choose Currency", options=rates.keys(), key="upcoming")
+    for maintanence in MaintanenceService().find_all_maintanence():
+        container = st.container(border=True)
+        container.write(f"Maintanence for {maintanence.device_id}")
+        container.write(f"Costs {convert_price(maintanence.price, selected_currency, "from_currency")}")
+        container.write(f"From {maintanence.start_date}")
+        container.write(f"Until {maintanence.end_date}")
 with tab2:
     
-    current_device = st.selectbox(label='Choose Device', options=["Geräte1"," Gerät2"])
-    
-    cost_eur = st.number_input(label="maintaincost in €", 
-                                key = "price_euro",
-                                on_change=update_price_from_euro)
-    
-    cost_usd = st.number_input(label="maintaincost in USD", 
-                                key = "price_dollar",
-                                on_change=update_price_from_dollar)
+    selected_device_id = st.selectbox(label='Choose Device', options=Device.find_all(), format_func=lambda x: x.get_ID())
+    selected_currency = st.selectbox("Choose Currency", options=rates.keys(), key="cost")
+    price = st.number_input(f"Price in {selected_currency}", value=0.0)
+    price = convert_price(price, selected_currency)
+    selected_date_start = st.date_input("Select a start date", value=date.today())
+    selected_date_end = st.date_input("Select a end date", value=date.today())
     
     if st.button("Enter cost"):
-        st.success(f"the maintance for the {current_device} will cost {cost_eur} € ")
+        maintanence_service = MaintanenceService()
+        maintanence_service.create_maintanence(selected_device_id.get_ID(), price, selected_date_start, selected_date_end)
+        st.rerun()
+        st.success(f"Reservation from {selected_date_start} until {selected_date_end} for {selected_device_id} costs {price}")

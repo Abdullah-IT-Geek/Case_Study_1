@@ -10,5 +10,6 @@
     ],
     "circuitpython.board.version": null,
     "circuitpython.board.vid": "0x239A",
-    "circuitpython.board.pid": "0x8120"
+    "circuitpython.board.pid": "0x8120",
+    "python.analysis.autoImportCompletions": true
 }

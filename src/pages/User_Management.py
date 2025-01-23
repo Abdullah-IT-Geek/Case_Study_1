@@ -28,7 +28,6 @@ st.write("Manage all the users here.")
 tab1, tab2 = st.tabs(["Create User", "Delete User"])
  
 with tab1:
-    # Add widgets for device management (example)
     user_name = st.text_input("Enter Username")
     user_email = st.text_input("Enter your email")
     if st.button("Create User"):
@@ -40,12 +39,9 @@ with tab1:
             st.success(f"User {user_name} created by {user_email}")
         st.rerun()
 with tab2:
-    #users = User.find_all()  # Liste aller User-Objekte abrufen
-    #print(users)  # Debugging: Alle Benutzer anzeigen
     current_user = st.selectbox(label='Choose User', options=User.find_all())
-    #print(selected_user)
     if st.button("Remove", icon="🗑️"):
-        current_user.delete()  # Löscht den ausgewählten Benutzer
+        current_user.delete()
         st.rerun()
 
     

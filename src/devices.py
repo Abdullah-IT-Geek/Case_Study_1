@@ -1,110 +1,52 @@
-import os
+from typing import Self
+from datetime import datetime
 
-from tinydb import TinyDB, Query
-from serializer import serializer
+from serializable import Serializable
+from database import DatabaseConnector
 
+class Device(Serializable):
 
-class Device():
-    # Class variable that is shared between all instances of the class
-    db_connector = TinyDB(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.json'), storage=serializer).table('devices')
+    db_connector =  DatabaseConnector().get_table("devices")
 
-    # Constructor
-    def __init__(self, device_name : str, managed_by_user_id : str):
-        self.device_name = device_name
+    def __init__(self, id: str, managed_by_user_id: str, end_of_life: datetime = None, creation_date: datetime = None, last_update: datetime = None):
+        super().__init__(id, creation_date, last_update)
         # The user id of the user that manages the device
         # We don't store the user object itself, but only the id (as a key)
         self.managed_by_user_id = managed_by_user_id
         self.is_active = True
-        
-    # String representation of the class
-    def __str__(self):
-        return f'{self.device_name} which is managed by {self.managed_by_user_id}'
+        self.end_of_life = end_of_life if end_of_life else datetime.today().date()
+   
+    @classmethod
+    def instantiate_from_dict(cls, data: dict) -> Self:
+        return cls(data['id'], data['managed_by_user_id'], data['end_of_life'], data['creation_date'], data['last_update'])
 
-    # String representation of the class
-    def __repr__(self):
-        return self.__str__()
+    def get_ID(self) -> str:
+        return F"{self.id}"
     
-    def store_data(self):
-        print("Storing data...")
-        # Check if the device already exists in the database
-        DeviceQuery = Query()
-        result = self.db_connector.search(DeviceQuery.device_name == self.device_name)
-        if result:
-            # Update the existing record with the current instance's data
-            result = self.db_connector.update(self.__dict__, doc_ids=[result[0].doc_id])
-            print("Data updated.")
-        else:
-            # If the device doesn't exist, insert a new record
-            self.db_connector.insert(self.__dict__)
-            print("Data inserted.")
-    
-    def delete(self):
-        print("Deleting data...")
-        # Check if the device exists in the database
-        DeviceQuery = Query()
-        result = self.db_connector.search(DeviceQuery.device_name == self.device_name)
-        if result:
-            # Delete the record from the database
-            self.db_connector.remove(doc_ids=[result[0].doc_id])
-            print(self.db_connector)
-            print("Data deleted.")
-        else:
-            print("Data not found.")
+    def __str__(self) -> str:
+        return F"Device: {self.id} ({self.managed_by_user_id}) - Active: {self.is_active} - Created: {self.creation_date} - Last Update: {self.last_update}"
 
     def set_managed_by_user_id(self, managed_by_user_id: str):
         """Expects `managed_by_user_id` to be a valid user id that exists in the database."""
         self.managed_by_user_id = managed_by_user_id
-        
-
-    # Class method that can be called without an instance of the class to construct an instance of the class
-    @classmethod
-    def find_by_attribute(cls, by_attribute: str, attribute_value: str, num_to_return=1):
-        # Load data from the database and create an instance of the Device class
-        DeviceQuery = Query()
-        result = cls.db_connector.search(DeviceQuery[by_attribute] == attribute_value)
-
-        if result:
-            data = result[:num_to_return]
-            device_results = [cls(d['device_name'], d['managed_by_user_id']) for d in data]
-            return device_results if num_to_return > 1 else device_results[0]
-        else:
-            return None
-
-    @classmethod
-    def find_all(cls) -> list:
-        # Load all data from the database and create instances of the Device class
-        devices = []
-        for device_data in Device.db_connector.all():
-            devices.append(Device(device_data['device_name'], device_data['managed_by_user_id']))
-        return devices
-
-
-
-    
 
 if __name__ == "__main__":
     # Create a device
     device1 = Device("Device1", "one@mci.edu")
     device2 = Device("Device2", "two@mci.edu") 
     device3 = Device("Device3", "two@mci.edu") 
-    device4 = Device("Device4", "two@mci.edu") 
     device1.store_data()
     device2.store_data()
     device3.store_data()
+    device4 = Device("Device3", "four@mci.edu") 
     device4.store_data()
-    device5 = Device("Device3", "four@mci.edu") 
-    device5.store_data()
-
-    #loaded_device = Device.find_by_attribute("device_name", "Device2")
-    loaded_device = Device.find_by_attribute("managed_by_user_id", "two@mci.edu")
+    
+    loaded_device = Device.find_by_attribute("id", "Device2")
     if loaded_device:
-        print(f"Loaded Device: {loaded_device}")
+        print(f"Loaded: {loaded_device}")
     else:
         print("Device not found.")
 
-    devices = Device.find_all()
-    print("All devices:")
-    for device in devices:
+    all_devices = Device.find_all()
+    for device in all_devices:
         print(device)
-
-    
